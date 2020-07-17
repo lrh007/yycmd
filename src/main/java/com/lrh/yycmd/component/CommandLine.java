@@ -8,9 +8,11 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Enumeration;
+import java.util.Random;
 
 /**
- * @Author lrh 2020/7/17 11:01
+ * 自定义命令
+ * @Author lrh 2020/7/17 16:57
  */
 @ShellComponent
 public class CommandLine {
@@ -36,11 +38,20 @@ public class CommandLine {
                 }
             }
             assert CONTEXT_FILE != null;
+            //修改提示符
+            changePromot(CONTEXT_FILE.getAbsolutePath());
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
+    /**
+     * 修改提示符
+     * @Author lrh 2020/7/17 17:12
+     */
+    public static void changePromot(String promot){
+        CustomPromptProvider.promot = promot;
+    }
     @ShellMethod(value = "Add Tow Integer numbers.", key = "sum")
     public int add(int a, int b) {
         return a + b;
@@ -59,12 +70,12 @@ public class CommandLine {
      * 查看当前目录下所有文件
      * @Author lrh 2020/7/17 15:25
      */
-    @ShellMethod(value = "Output File path.",key = {"ls","dir"})
+    @ShellMethod(value = "查看当前文件夹下所有文件.",key = {"ls","dir"})
     public String ls(@ShellOption(defaultValue = "") String path) throws IOException {
         File[] files = CONTEXT_FILE.listFiles();
         //如果传递了目录就使用传递的目录，否则就使用当前目录
         if(!"".equals(path)){
-            File f = new File(path);
+            File f = new File(path.trim());
             if(f.exists()){
                 if(!f.isDirectory()){
                     System.out.println("路径不是文件夹，请重新输入！！！");
@@ -76,16 +87,39 @@ public class CommandLine {
                 return null;
             }
         }
-
         StringBuilder builder = new StringBuilder();
         assert files != null;
         for (int i = 0; i < files.length; i++) {
-            builder.append(files[i].getAbsolutePath());
+            builder.append(files[i].getName());
             if(i < files.length-1){
                 builder.append("\r\n");
             }
         }
         return builder.toString();
     }
-
+    
+    /**   
+     * 进入指定文件夹
+     * @Author lrh 2020/7/17 17:20
+     */
+    @ShellMethod("进入指定文件夹")
+    public void cd(@ShellOption(defaultValue = "") String path){
+        path = path.trim();
+        if("".equals(path)){
+            System.out.println("请输入文件夹！！！");
+        }else{
+            //返回上一级目录
+            if ("..".equals(path) || "../".equals(path) || "..\\".equals(path)) {
+                String parentPath = CONTEXT_FILE.getParent();
+                if(parentPath != null){
+                    //修改提示符
+                    changePromot(parentPath);
+                    //改变全局变量
+                    CONTEXT_FILE = new File(parentPath);
+                }
+            }else{
+                System.out.println(CONTEXT_FILE.getAbsolutePath());
+            }
+        }
+    }
 }
