@@ -52,21 +52,25 @@ public class CommandLine {
     public static void changePromot(String promot){
         CustomPromptProvider.promot = promot;
     }
-    @ShellMethod(value = "Add Tow Integer numbers.", key = "sum")
-    public int add(int a, int b) {
-        return a + b;
+
+    /**
+     * 设置全局变量并且改变命令提示符
+     * @param promot
+     */
+    public static void setContextFileAndChangePromot(String promot){
+        CustomPromptProvider.promot = promot;
+        CONTEXT_FILE = new File(promot);
     }
 
-    @ShellMethod(value = "Display stuff.",prefix = "-")
-    public String echo(int a,int b,@ShellOption("--third") int c){
-        return String.format("You said a=%d, b=%d, c=%d", a, b, c);
+    /**
+     * 设置全局变量并且改变命令提示符
+     * @param file
+     */
+    public static void setContextFileAndChangePromot(File file){
+        CustomPromptProvider.promot = file.getAbsolutePath();
+        CONTEXT_FILE = file;
     }
-
-    @ShellMethod("Say hello.")
-    public String greet(@ShellOption(defaultValue = "world") String who){
-        return "hello "+who;
-    }
-    /**   
+    /**
      * 查看当前目录下所有文件
      * @Author lrh 2020/7/17 15:25
      */
@@ -112,14 +116,69 @@ public class CommandLine {
             if ("..".equals(path) || "../".equals(path) || "..\\".equals(path)) {
                 String parentPath = CONTEXT_FILE.getParent();
                 if(parentPath != null){
-                    //修改提示符
-                    changePromot(parentPath);
-                    //改变全局变量
-                    CONTEXT_FILE = new File(parentPath);
+                    //设置全局变量并且改变提示符
+                    setContextFileAndChangePromot(parentPath);
                 }
             }else{
-                System.out.println(CONTEXT_FILE.getAbsolutePath());
+                //进入下一级目录
+                String nextPath = CONTEXT_FILE.getAbsolutePath()+"/"+path;
+                File file = new File(nextPath);
+                if(!file.isDirectory()){
+                    System.out.println(path+" 不是一个文件夹，请重新输入！！！");
+                    return;
+                }
+                //设置全局变量并且改变提示符
+                setContextFileAndChangePromot(file);
             }
         }
+    }
+
+    /**
+     * 文件复制
+     * @param sourcePath
+     * @param destPath
+     */
+    @ShellMethod(value = "复制文件.",key = {"cp","copy"})
+    public void copy(@ShellOption(defaultValue = "") String sourcePath,@ShellOption(defaultValue = "") String destPath){
+        sourcePath = sourcePath.trim();
+        destPath = destPath.trim();
+        if("".equals(sourcePath) && "".equals(destPath)){
+            System.out.println("请输入源文件和目标文件！！！");
+            return;
+        }
+        if("".equals(sourcePath)){
+            System.out.println("请输入源文件！！！");
+            return;
+        }
+        if("".equals(destPath)){
+            System.out.println("请输入目标文件！！！");
+            return;
+        }
+        File sourceFile = new File(sourcePath); //源文件
+        File destFile = new File(destPath); //目标文件
+        if(!sourceFile.exists()){
+            System.out.println("源文件不存在，请重新输入！！！");
+            return;
+        }
+        if(destFile.exists()){
+            if(!destFile.isDirectory()){
+                System.out.println("目标文件不是文件夹，请重新输入！！！");
+                return;
+            }
+            //是文件夹,开始复制
+            copyFile(sourceFile,destFile);
+
+        }
+
+
+    }
+
+    /**
+     * 复制文件
+     * @param sourceFile
+     * @param destFile
+     */
+    public void copyFile(File sourceFile,File destFile){
+
     }
 }
