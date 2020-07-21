@@ -67,6 +67,9 @@ public class CommandLine {
      * @param file
      */
     public static void setContextFileAndChangePromot(File file){
+        if(!"".equals(file.getAbsolutePath())){
+            CustomPromptProvider.promot = null;
+        }
         CustomPromptProvider.promot = file.getAbsolutePath();
         CONTEXT_FILE = file;
     }
@@ -123,7 +126,14 @@ public class CommandLine {
                 //进入下一级目录
                 String nextPath = CONTEXT_FILE.getAbsolutePath()+"/"+path;
                 File file = new File(nextPath);
-                if(!file.isDirectory()){
+                if(!file.exists() || !file.isDirectory()){
+                    //从根目录查询
+                    file = new File(path);
+                    if(file.exists() && file.isDirectory()){
+                        //设置全局变量并且改变提示符
+                        setContextFileAndChangePromot(file);
+                        return;
+                    }
                     System.out.println(path+" 不是一个文件夹，请重新输入！！！");
                     return;
                 }
@@ -167,7 +177,6 @@ public class CommandLine {
             }
             //是文件夹,开始复制
             copyFile(sourceFile,destFile);
-
         }
 
 
